@@ -27,3 +27,6 @@ def checkCollision(plane1: Plane, plane2: Plane, margin = 15):
     if xdiff < margin and ydiff < margin:
         return True
     return False
+
+def update(planes: list[Plane]):
+    return planes

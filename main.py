@@ -16,6 +16,13 @@ planes: list[Plane] = [
         plan = [Coord(50, 50)],
         speed = 5,
         pos = Coord(500, 50)
+    ),
+    Plane(
+        id = 'YAYAYAYAYAY',
+        heading = 270,
+        plan = [Coord(0,0)],
+        speed = 30,
+        pos = Coord(1000, 50)
     )
 ]
 
@@ -28,12 +35,13 @@ WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 
-screen = pygame.display.set_mode((800, 600))
+screen = pygame.display.set_mode((1500, 1000))
 clock = pygame.time.Clock()
 running = True
 update = True
 
 while running:
+    planes = update(planes)
     screen.fill((0, 0, 0)) # Clear screen
 
     # Pygame event handling
