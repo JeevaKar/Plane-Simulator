@@ -14,7 +14,7 @@ planes: list[Plane] = [
     Plane(
         id = 'WEST',
         heading = 270,
-        plan = [Coord(100, 500, 200)],
+        plan = [Coord(100, 500, 200), Coord(600, 100, 200)],
         speed = 20,
         ascentRate = 0,
         pos = Coord(1100, 500, 200)

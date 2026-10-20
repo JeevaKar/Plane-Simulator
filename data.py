@@ -51,19 +51,6 @@ def checkCollision(pos1: Coord, pos2: Coord, margin = 50):
 def euclideanDist(*args):
     return math.sqrt(sum(pow(a, 2) for a in args))
 
-def setHeading(plane: Plane):
-    xdiff = plane.plan[0].lat - plane.pos.lat
-    ydiff = plane.plan[0].long - plane.pos.long
-    zdiff = plane.plan[0].alt - plane.pos.alt
-    dist = euclideanDist(xdiff, ydiff)
-    framesLeft = max(dist / plane.speed, 1)
-    
-    plane.heading = math.degrees(math.atan2(xdiff, ydiff)) % 360
-    plane.ascentRate = zdiff / framesLeft
-    plane.ascentRate = max(-plane.maxRate, min(plane.maxRate, plane.ascentRate))
-
-    return plane
-
 def avoidCollision(plane: Plane, planes: Plane):
     i = 0
     while i < len(planes):
@@ -80,6 +67,46 @@ def avoidCollision(plane: Plane, planes: Plane):
         i += 1
     return plane
 
+def terrainCollision(pos_init, pos_final):
+    return False
+
+def angleBetween(pos: Coord, point1: Coord, point2: Coord) -> float:
+    angle1 = math.atan2(point1.lat - pos.lat, point1.long - pos.long)
+    angle2 = math.atan2(point2.lat - pos.lat, point2.long - pos.long)
+    diff = abs(math.degrees(angle1 - angle2)) % 360
+    return 360 - diff if diff > 180 else diff
+
+def nextCheckpoint(plane: Plane) -> Coord | None:
+    if not plane.plan:
+        return None  # nothing to fly to
+
+    final = plane.plan[-1]
+    valid_checkpoints = []
+    for checkpoint in plane.plan:
+        valid_checkpoints.insert(0, checkpoint)
+        if angleBetween(plane.pos, checkpoint, final) < 90:
+            break
+
+    for checkpoint in valid_checkpoints:
+        if not terrainCollision(plane.pos, checkpoint):
+            return checkpoint
+
+    return plane.plan[0]
+
+def setHeading(plane: Plane):
+    nextCoord = nextCheckpoint(plane)
+
+    xdiff = nextCoord.lat - plane.pos.lat
+    ydiff = nextCoord.long - plane.pos.long
+    zdiff = nextCoord.alt - plane.pos.alt
+    dist = euclideanDist(xdiff, ydiff)
+    framesLeft = max(dist / plane.speed, 1)
+    
+    plane.heading = math.degrees(math.atan2(xdiff, ydiff)) % 360
+    plane.ascentRate = zdiff / framesLeft
+    plane.ascentRate = max(-plane.maxRate, min(plane.maxRate, plane.ascentRate))
+
+    return plane
 
 def updatePos(planes: list[Plane]):
     remaining = []
