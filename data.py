@@ -45,11 +45,24 @@ def overlap(x1, x2, y1, y2, z1, z2, margin = 50, zmargin = 50):
         return True
     return False
 
-def checkCollision(pos1: Coord, pos2: Coord, margin = 15):
+def checkCollision(pos1: Coord, pos2: Coord, margin = 50):
     return overlap(pos1.lat, pos2.lat, pos1.long, pos2.long, pos1.alt, pos2.alt, margin)
 
 def euclideanDist(*args):
     return math.sqrt(sum(pow(a, 2) for a in args))
+
+def setHeading(plane: Plane):
+    xdiff = plane.plan[0].lat - plane.pos.lat
+    ydiff = plane.plan[0].long - plane.pos.long
+    zdiff = plane.plan[0].alt - plane.pos.alt
+    dist = euclideanDist(xdiff, ydiff)
+    framesLeft = max(dist / plane.speed, 1)
+    
+    plane.heading = math.degrees(math.atan2(xdiff, ydiff)) % 360
+    plane.ascentRate = zdiff / framesLeft
+    plane.ascentRate = max(-plane.maxRate, min(plane.maxRate, plane.ascentRate))
+
+    return plane
 
 def updatePos(planes: list[Plane]):
     remaining = []
@@ -64,15 +77,7 @@ def updatePos(planes: list[Plane]):
                 remaining.append(plane)
                 continue  # reached final waypoint, drop it
 
-        xdiff = plane.plan[0].lat - plane.pos.lat
-        ydiff = plane.plan[0].long - plane.pos.long
-        zdiff = plane.plan[0].alt - plane.pos.alt
-        dist = euclideanDist(xdiff, ydiff)
-        framesLeft = max(dist / plane.speed, 1)
-        
-        plane.heading = math.degrees(math.atan2(xdiff, ydiff)) % 360
-        plane.ascentRate = zdiff / framesLeft
-        plane.ascentRate = max(-plane.maxRate, min(plane.maxRate, plane.ascentRate))
+        plane = setHeading(plane)
 
         # Avoid Collision
         i = 0

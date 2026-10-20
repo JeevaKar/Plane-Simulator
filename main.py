@@ -29,7 +29,8 @@ font1 = pygame.font.SysFont('freesanbold.ttf', 15)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
-ORANGE = (0, 0, 255)
+BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
 
 SCREEN_WIDTH = 1500
 SCREEN_LENGTH = 1000
@@ -50,6 +51,11 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
+    # Display future points
+    for plane in planes:
+        for point in plane.plan:
+            pygame.draw.circle(screen, YELLOW, toPygame(tuple(point)), 2)
+
     # Updating positions
     for plane in planes:
         color = GREEN
@@ -60,7 +66,7 @@ while running:
                 color = RED
                 # update = False
             elif color != RED and futureCrash(plane, otherPlane):
-                color = ORANGE
+                color = BLUE
         
         rad = math.radians(plane.heading)
         plane.pos.lat  += plane.speed * math.sin(rad)   # x
