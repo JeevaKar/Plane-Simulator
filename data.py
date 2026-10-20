@@ -36,7 +36,7 @@ class Plane:
 
         return Coord(x, y, z)
 
-def overlap(x1, x2, y1, y2, z1, z2, margin = 50, zmargin = 50):
+def overlap(x1, x2, y1, y2, z1, z2, margin = 15, zmargin = 50):
     xdiff = abs(x1 - x2)
     ydiff = abs(y1 - y2)
     zdiff = abs(z1 - z2)
