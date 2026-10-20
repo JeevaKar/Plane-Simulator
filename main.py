@@ -6,7 +6,7 @@ planes: list[Plane] = [
     Plane(
         id = 'AA743',
         heading = 45,
-        plan = [Coord(0, 0)],
+        plan = [Coord(50, 50)],
         speed = 5,
         pos = Coord(400,300)
     ),
@@ -20,9 +20,9 @@ planes: list[Plane] = [
     Plane(
         id = 'YAYAYAYAYAY',
         heading = 270,
-        plan = [Coord(0,0)],
+        plan = [Coord(1500,1000), Coord(1000, 500), Coord(30, 30)],
         speed = 30,
-        pos = Coord(1000, 50)
+        pos = Coord(0, 0)
     )
 ]
 
@@ -41,7 +41,7 @@ running = True
 update = True
 
 while running:
-    planes = update(planes)
+    planes = updateFunc(planes)
     screen.fill((0, 0, 0)) # Clear screen
 
     # Pygame event handling
@@ -72,4 +72,4 @@ while running:
     
     if update:
         pygame.display.flip() # Update display
-    clock.tick(1) # Limit FPS
+    clock.tick(5) # Limit FPS
