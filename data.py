@@ -108,6 +108,14 @@ def setHeading(plane: Plane):
 
     return plane
 
+def updateCheckpoints(plane: Plane):
+    i = 0
+    for checkpoint in plane.plan:
+        if overlap(plane.pos.lat, checkpoint.lat, plane.pos.long, checkpoint.long, plane.pos.alt, checkpoint.alt, 1.5 * plane.speed):
+            plane.plan = plane.plan[i+1:]
+            return plane
+    return plane
+
 def updatePos(planes: list[Plane]):
     remaining = []
     for plane in planes:
@@ -115,11 +123,10 @@ def updatePos(planes: list[Plane]):
             remaining.append(plane)
             continue  # nothing to fly to, drop it
 
-        if overlap(plane.pos.lat, plane.plan[0].lat, plane.pos.long, plane.plan[0].long, plane.pos.alt, plane.plan[0].alt, 1.5 * plane.speed):
-            plane.plan.pop(0)
-            if not plane.plan:
-                remaining.append(plane)
-                continue  # reached final waypoint, drop it
+        plane = updateCheckpoints(plane)
+        if not plane.plan:
+            remaining.append(plane)
+            continue
 
         plane = setHeading(plane)
         plane = avoidCollision(plane, planes)
