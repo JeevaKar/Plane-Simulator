@@ -4,21 +4,61 @@ import math
 
 planes: list[Plane] = [
     Plane(
-        id = 'EAST',
-        heading = 90,
-        plan = [Coord(1400, 500, 200)],
+        id = 'UAL212',
+        heading = 227,
+        plan = [Coord(420, 800, 550), Coord(200, 650, 400), Coord(150, 500, 250), Coord(350, 500, 120), Coord(600, 500, 0)],
         speed = 20,
         ascentRate = 0,
-        pos = Coord(500, 500, 200)
+        pos = Coord(600, 970, 700)
     ),
     Plane(
-        id = 'WEST',
-        heading = 270,
-        plan = [Coord(100, 500, 200), Coord(600, 100, 200)],
+        id = 'SWA518',
+        heading = 254,
+        plan = [Coord(620, 900, 600), Coord(420, 800, 550), Coord(200, 650, 400), Coord(150, 500, 250), Coord(350, 500, 120), Coord(600, 500, 0)],
         speed = 20,
         ascentRate = 0,
-        pos = Coord(1100, 500, 200)
-    )
+        pos = Coord(900, 980, 700)
+    ),
+    Plane(
+        id = 'DAL904',
+        heading = 12,
+        plan = [Coord(300, 250, 450), Coord(120, 400, 330), Coord(150, 500, 250), Coord(350, 500, 120), Coord(600, 500, 0)],
+        speed = 20,
+        ascentRate = 0,
+        pos = Coord(250, 20, 600)
+    ),
+    Plane(
+        id = 'JBU77',
+        heading = 288,
+        plan = [Coord(450, 100, 500), Coord(300, 250, 450), Coord(120, 400, 330), Coord(150, 500, 250), Coord(350, 500, 120), Coord(600, 500, 0)],
+        speed = 20,
+        ascentRate = 0,
+        pos = Coord(700, 20, 600)
+    ),
+    Plane(
+        id = 'AAL330',
+        heading = 280,
+        plan = [Coord(1000, 700, 600), Coord(500, 760, 500), Coord(150, 700, 380), Coord(150, 500, 250), Coord(350, 500, 120), Coord(600, 500, 0)],
+        speed = 25,
+        ascentRate = 0,
+        pos = Coord(1450, 620, 650)
+    ),
+    Plane(
+        id = 'FDX12',
+        heading = 95,
+        plan = [Coord(1150, 430, 250), Coord(1300, 330, 500), Coord(1480, 250, 800)],
+        speed = 20,
+        ascentRate = 0,
+        pos = Coord(900, 450, 0)
+    ),
+    Plane(
+        id = 'UAL48',
+        heading = 81,
+        plan = [Coord(1150, 600, 250), Coord(1300, 720, 500), Coord(1480, 850, 800)],
+        speed = 20,
+        ascentRate = 0,
+        pos = Coord(900, 560, 0)
+    ),
 ]
 
 pygame.init()

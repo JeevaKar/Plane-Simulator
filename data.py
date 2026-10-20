@@ -25,6 +25,9 @@ class Plane:
     pos: Coord
 
     maxRate:float = 20
+    turnRate: float = 10          # degrees turned per frame while circling
+    looping: bool = False
+    loopTarget: Coord | None = None
 
     def futurePos(self, t: float) -> Coord:
         vx = self.speed * math.sin(math.radians(self.heading))
@@ -35,6 +38,28 @@ class Plane:
         z = self.pos.alt + self.ascentRate * t
 
         return Coord(x, y, z)
+
+def goAround(plane: Plane, zmargin=50) -> bool:
+    """Circle a checkpoint that was reached too high. Returns True while looping."""
+    target = plane.plan[0]
+    tooHigh = plane.pos.alt - target.alt > zmargin
+
+    if plane.looping and plane.loopTarget is not target:
+        plane.looping = False                 # the target changed, so this loop no longer applies
+
+    if not plane.looping:
+        near = euclideanDist(target.lat - plane.pos.lat,
+                             target.long - plane.pos.long) < 1.5 * plane.speed
+        if near and tooHigh:                  # crossing the checkpoint while too high
+            plane.looping = True
+            plane.loopTarget = target
+    elif not tooHigh:
+        plane.looping = False                 # low enough, head back to the checkpoint
+
+    if plane.looping:
+        plane.heading = (plane.heading + plane.turnRate) % 360
+        plane.ascentRate = max(-plane.maxRate, target.alt - plane.pos.alt)  # descend without undershooting
+    return plane.looping
 
 def overlap(x1, x2, y1, y2, z1, z2, margin = 15, zmargin = 50):
     xdiff = abs(x1 - x2)
@@ -51,20 +76,23 @@ def checkCollision(pos1: Coord, pos2: Coord, margin = 50):
 def euclideanDist(*args):
     return math.sqrt(sum(pow(a, 2) for a in args))
 
-def avoidCollision(plane: Plane, planes: Plane):
-    i = 0
-    while i < len(planes):
-        otherplane = planes[i]
-        if otherplane == plane:
-            i += 1
-            continue
-        while futureCrash(plane, otherplane):
-            plane.heading += 5
-            if futureCrash(plane, otherplane):
-                plane.heading -= 10
-            if futureCrash(plane, otherplane):
-                plane.heading += 15
-        i += 1
+def avoidCollision(plane: Plane, planes: list[Plane], maxTurn=90, step=5):
+    others = [p for p in planes if p is not plane]
+
+    def clear():
+        return all(futureCrash(plane, o) is None for o in others)
+
+    if clear():
+        return plane
+
+    base = plane.heading
+    for turn in range(step, maxTurn + 1, step):
+        for sign in (1, -1):
+            plane.heading = (base + sign * turn) % 360
+            if clear():
+                return plane
+
+    plane.heading = base  # no safe turn found
     return plane
 
 def terrainCollision(pos_init, pos_final):
@@ -77,21 +105,25 @@ def angleBetween(pos: Coord, point1: Coord, point2: Coord) -> float:
     return 360 - diff if diff > 180 else diff
 
 def nextCheckpoint(plane: Plane) -> Coord | None:
-    if not plane.plan:
+    plan = plane.plan
+    if not plan:
         return None  # nothing to fly to
 
-    final = plane.plan[-1]
-    valid_checkpoints = []
-    for checkpoint in plane.plan:
-        valid_checkpoints.insert(0, checkpoint)
-        if angleBetween(plane.pos, checkpoint, final) < 90:
-            break
+    final = plan[-1]
 
-    for checkpoint in valid_checkpoints:
-        if not terrainCollision(plane.pos, checkpoint):
-            return checkpoint
+    # Furthest waypoint we're allowed to skip to: the first one that points
+    # within 90° of the direction to the final waypoint. The last waypoint
+    # always qualifies, so this never runs off the end.
+    j = next((i for i, c in enumerate(plan)
+              if angleBetween(plane.pos, c, final) < 90), len(plan) - 1)
 
-    return plane.plan[0]
+    # Prefer the furthest-ahead waypoint with a clear path, falling back toward plan[0]
+    for i in range(j, -1, -1):
+        if not terrainCollision(plane.pos, plan[i]):
+            del plan[:i]       # commit: skipped waypoints are gone for good
+            return plan[0]
+
+    return plan[0]             # everything is blocked, skip nothing
 
 def setHeading(plane: Plane):
     nextCoord = nextCheckpoint(plane)
@@ -119,23 +151,29 @@ def updateCheckpoints(plane: Plane):
 def updatePos(planes: list[Plane]):
     remaining = []
     for plane in planes:
-        if not plane.plan:
-            remaining.append(plane)
-            continue  # nothing to fly to, drop it
+        if plane.plan:
+            plane = updateCheckpoints(plane)
 
-        plane = updateCheckpoints(plane)
         if not plane.plan:
+            # out of waypoints: keep descending straight ahead until on the ground
+            if plane.pos.alt <= 0:
+                continue                      # landed, remove it
+            plane.ascentRate = -plane.maxRate
+            remaining.append(plane)
+            continue
+
+        if goAround(plane):
             remaining.append(plane)
             continue
 
         plane = setHeading(plane)
         plane = avoidCollision(plane, planes)
-        
+
         remaining.append(plane)
     return remaining
 
-def futureCrash(plane1:Plane, plane2:Plane) -> int:
-    for i in np.linspace(0, 300, 600, True):
-        if checkCollision(plane1.futurePos(i), plane2.futurePos(i)):
-            return i
-    return 0
+def futureCrash(plane1: Plane, plane2: Plane, horizon=300, step=0.5):
+    for t in np.arange(0, horizon, step):
+        if checkCollision(plane1.futurePos(t), plane2.futurePos(t)):
+            return t
+    return None
