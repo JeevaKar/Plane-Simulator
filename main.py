@@ -4,25 +4,20 @@ import math
 
 planes: list[Plane] = [
     Plane(
-        id = 'AA743',
-        heading = 45,
-        plan = [Coord(50, 50)],
-        speed = 5,
-        pos = Coord(400,300)
+        id = 'EAST',
+        heading = 90,
+        plan = [Coord(1400, 500, 200)],
+        speed = 20,
+        ascentRate = 0,
+        pos = Coord(500, 500, 200)
     ),
     Plane(
-        id = 'WND3997',
-        heading = 180,
-        plan = [Coord(50, 50)],
-        speed = 5,
-        pos = Coord(500, 50)
-    ),
-    Plane(
-        id = 'YAYAYAYAYAY',
+        id = 'WEST',
         heading = 270,
-        plan = [Coord(1500,1000), Coord(1000, 500), Coord(30, 30)],
-        speed = 30,
-        pos = Coord(0, 0)
+        plan = [Coord(100, 500, 200)],
+        speed = 20,
+        ascentRate = 0,
+        pos = Coord(1100, 500, 200)
     )
 ]
 
@@ -34,14 +29,20 @@ font1 = pygame.font.SysFont('freesanbold.ttf', 15)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
+ORANGE = (0, 0, 255)
 
-screen = pygame.display.set_mode((1500, 1000))
+SCREEN_WIDTH = 1500
+SCREEN_LENGTH = 1000
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_LENGTH))
 clock = pygame.time.Clock()
 running = True
 update = True
 
+def toPygame(coords, height = SCREEN_LENGTH):
+    return (coords[0], height - coords[1])
+
 while running:
-    planes = updateFunc(planes)
+    planes = updatePos(planes)
     screen.fill((0, 0, 0)) # Clear screen
 
     # Pygame event handling
@@ -55,21 +56,29 @@ while running:
         for otherPlane in planes:
             if otherPlane == plane:
                 continue
-            elif checkCollision(plane, otherPlane):
+            elif checkCollision(plane.pos, otherPlane.pos):
                 color = RED
                 # update = False
+            elif color != RED and futureCrash(plane, otherPlane):
+                color = ORANGE
         
         rad = math.radians(plane.heading)
         plane.pos.lat  += plane.speed * math.sin(rad)   # x
-        plane.pos.long -= plane.speed * math.cos(rad)   # y
+        plane.pos.long += plane.speed * math.cos(rad)   # y
+        plane.pos.alt += plane.ascentRate
         
         label = font1.render(plane.id, True, color)
         labelRect = label.get_rect()
-        labelRect.topleft = tuple(plane.pos.offset())
+        labelRect.topleft = toPygame(tuple(plane.pos.offset()))
+
+        altLabel = font1.render(str(plane.pos.alt), True, color)
+        altRect = altLabel.get_rect()
+        altRect.topleft = toPygame(tuple(plane.pos.offset(offsety=15)))
         
         screen.blit(label, labelRect)
-        pygame.draw.circle(screen, color, tuple(plane.pos), 5)
+        screen.blit(altLabel, altRect)
+        pygame.draw.circle(screen, color, toPygame(tuple(plane.pos)), 5)
     
     if update:
         pygame.display.flip() # Update display
-    clock.tick(5) # Limit FPS
+    clock.tick(1) # Limit FPS
