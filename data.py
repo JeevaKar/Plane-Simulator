@@ -64,6 +64,23 @@ def setHeading(plane: Plane):
 
     return plane
 
+def avoidCollision(plane: Plane, planes: Plane):
+    i = 0
+    while i < len(planes):
+        otherplane = planes[i]
+        if otherplane == plane:
+            i += 1
+            continue
+        while futureCrash(plane, otherplane):
+            plane.heading += 5
+            if futureCrash(plane, otherplane):
+                plane.heading -= 10
+            if futureCrash(plane, otherplane):
+                plane.heading += 15
+        i += 1
+    return plane
+
+
 def updatePos(planes: list[Plane]):
     remaining = []
     for plane in planes:
@@ -78,22 +95,7 @@ def updatePos(planes: list[Plane]):
                 continue  # reached final waypoint, drop it
 
         plane = setHeading(plane)
-
-        # Avoid Collision
-        i = 0
-        while i < len(planes):
-            otherplane = planes[i]
-            if otherplane == plane:
-                i += 1
-                continue
-            while futureCrash(plane, otherplane):
-                plane.heading += 5
-                if futureCrash(plane, otherplane):
-                    plane.heading -= 10
-                if futureCrash(plane, otherplane):
-                    plane.heading += 15
-            i += 1
-
+        plane = avoidCollision(plane, planes)
         
         remaining.append(plane)
     return remaining
