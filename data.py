@@ -75,19 +75,19 @@ def updatePos(planes: list[Plane]):
         plane.ascentRate = max(-plane.maxRate, min(plane.maxRate, plane.ascentRate))
 
         # Avoid Collision
-        # i = 0
-        # while i < len(planes):
-        #     otherplane = planes[i]
-        #     if otherplane == plane:
-        #         i += 1
-        #         continue
-        #     while futureCrash(plane, otherplane):
-        #         plane.heading += 5
-        #         if futureCrash(plane, otherplane):
-        #             plane.heading -= 10
-        #         if futureCrash(plane, otherplane):
-        #             plane.heading += 15
-        #     i += 1
+        i = 0
+        while i < len(planes):
+            otherplane = planes[i]
+            if otherplane == plane:
+                i += 1
+                continue
+            while futureCrash(plane, otherplane):
+                plane.heading += 5
+                if futureCrash(plane, otherplane):
+                    plane.heading -= 10
+                if futureCrash(plane, otherplane):
+                    plane.heading += 15
+            i += 1
 
         
         remaining.append(plane)
