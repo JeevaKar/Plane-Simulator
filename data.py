@@ -26,9 +26,7 @@ class Plane:
     pos: Coord
 
     maxRate:float = 20
-    turnRate: float = 10          # degrees turned per frame while circling
-    looping: bool = False
-    loopTarget: Coord | None = None
+    turnRate: float = 30          # degrees turned per frame while circling
 
     def futurePos(self, t: float) -> Coord:
         vx = self.speed * math.sin(math.radians(self.heading))
@@ -51,23 +49,20 @@ def goAround(plane: Plane, zmargin=50) -> bool:
     """Circle a checkpoint that was reached too high. Returns True while looping."""
     target = plane.plan[0]
     tooHigh = plane.pos.alt - target.alt > zmargin
+    near = euclideanDist(target.lat - plane.pos.lat, target.long - plane.pos.long) < 1.5 * plane.speed
 
-    if plane.looping and plane.loopTarget is not target:
-        plane.looping = False                 # the target changed, so this loop no longer applies
+    if near and tooHigh:
+        zdiff = plane.pos.alt - target.alt
+        zdiff /= 2
+        distance = zdiff / (plane.maxRate * 0.75)
 
-    if not plane.looping:
-        near = euclideanDist(target.lat - plane.pos.lat,
-                             target.long - plane.pos.long) < 1.5 * plane.speed
-        if near and tooHigh:                  # crossing the checkpoint while too high
-            plane.looping = True
-            plane.loopTarget = target
-    elif not tooHigh:
-        plane.looping = False                 # low enough, head back to the checkpoint
 
-    if plane.looping:
-        plane.heading = (plane.heading + plane.turnRate) % 360
-        plane.ascentRate = max(-plane.maxRate, target.alt - plane.pos.alt)  # descend without undershooting
-    return plane.looping
+        newx = plane.pos.lat + distance * math.sin(math.degrees(plane.heading))
+        newy = plane.pos.long + distance * math.cos(math.degrees(plane.heading))
+        plane.plan.insert(0, Coord(newx, newy, zdiff, True))
+        print(f'{plane.id} went around')
+
+    return plane
 
 def overlap(x1, x2, y1, y2, z1, z2, margin = 15, zmargin = 50):
     xdiff = abs(x1 - x2)
@@ -179,10 +174,7 @@ def updatePos(planes: list[Plane]):
             remaining.append(plane)
             continue
 
-        if goAround(plane):
-            remaining.append(plane)
-            continue
-
+        plane = goAround(plane)
         plane = setHeading(plane)
         plane = avoidCollision(plane, planes)
 
