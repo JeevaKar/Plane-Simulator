@@ -133,8 +133,16 @@ def setHeading(plane: Plane):
     zdiff = nextCoord.alt - plane.pos.alt
     dist = euclideanDist(xdiff, ydiff)
     framesLeft = max(dist / plane.speed, 1)
-    
-    plane.heading = math.degrees(math.atan2(xdiff, ydiff)) % 360
+
+    desired = math.degrees(math.atan2(xdiff, ydiff)) % 360
+
+    # shortest signed turn from the current heading to the desired one, in -180..180
+    diff = (desired - plane.heading + 180) % 360 - 180
+
+    # limit how far it can turn this frame
+    diff = max(-plane.turnRate, min(plane.turnRate, diff))
+
+    plane.heading = (plane.heading + diff) % 360
     plane.ascentRate = zdiff / framesLeft
     plane.ascentRate = max(-plane.maxRate, min(plane.maxRate, plane.ascentRate))
 
