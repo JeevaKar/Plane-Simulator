@@ -7,6 +7,7 @@ class Coord:
     lat: float
     long: float
     alt: float = 0
+    skippable: bool = False
 
     def offset(self, offsetx = 5, offsety = 5):
         return Coord(self.lat + offsetx, self.long - offsety)
@@ -38,6 +39,13 @@ class Plane:
         z = self.pos.alt + self.ascentRate * t
 
         return Coord(x, y, z)
+
+@dataclass
+class Runway:
+    id: str
+    heading: int # magnetic heading
+    landingRoute: list[Coord]
+    departureRoute: list[Coord]
 
 def goAround(plane: Plane, zmargin=50) -> bool:
     """Circle a checkpoint that was reached too high. Returns True while looping."""
@@ -115,7 +123,8 @@ def nextCheckpoint(plane: Plane) -> Coord | None:
     # within 90° of the direction to the final waypoint. The last waypoint
     # always qualifies, so this never runs off the end.
     j = next((i for i, c in enumerate(plan)
-              if angleBetween(plane.pos, c, final) < 90), len(plan) - 1)
+          if not c.skippable or angleBetween(plane.pos, c, final) < 90),
+         len(plan) - 1)
 
     # Prefer the furthest-ahead waypoint with a clear path, falling back toward plan[0]
     for i in range(j, -1, -1):
